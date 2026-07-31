@@ -1,0 +1,4 @@
+# Cloudflare Pages _redirects
+# Next.js static export generates /path/index.html for each route
+# Cloudflare Pages automatically serves index.html for directory paths
+# No explicit redirects needed — removing the old rules that caused redirect loops

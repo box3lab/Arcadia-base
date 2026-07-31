@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.git
+.gitignore
+*.md
+.env
+.env.local
+.env*.local
+scripts/
+docs/
+arcadia-base-backup-*
