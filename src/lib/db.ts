@@ -1,5 +1,5 @@
 
-import { ungzip } from "pako";
+
 import type { MapEntry } from "./api";
 
 export interface Dao3CoAuthor {
@@ -199,83 +199,27 @@ export interface UnifiedSearchResult {
   relevance: number;
 }
 
-let _box3Db: MapEntry[] | null = null;
-let _box3Loading: Promise<MapEntry[]> | null = null;
-let _dao3Db: Dao3MapEntry[] | null = null;
-let _dao3Loading: Promise<Dao3MapEntry[]> | null = null;
-let _box3SearchDb: Box3SearchEntry[] | null = null;
-let _box3SearchLoading: Promise<Box3SearchEntry[]> | null = null;
-
-async function loadGzJson<T>(url: string, cache: { db: T | null; promise: Promise<T> | null }, setter: (v: T) => void): Promise<T> {
-  if (cache.db) return cache.db;
-  if (cache.promise) return cache.promise;
-  cache.promise = (async () => {
-    try {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error("下载失败: HTTP " + resp.status);
-      const compressed = new Uint8Array(await resp.arrayBuffer());
-      const decompressed = ungzip(compressed);
-      const data: T = JSON.parse(new TextDecoder("utf-8").decode(decompressed));
-      setter(data);
-      cache.db = data;
-      return data;
-    } catch (e) {
-      cache.promise = null;
-      throw e;
-    }
-  })();
-  return cache.promise;
-}
-
-export async function clientLoadBox3Db(): Promise<MapEntry[]> {
-  return loadGzJson("/data/db.json.gz", { db: _box3Db, promise: _box3Loading }, (v) => { _box3Db = v; });
-}
-
-export async function clientLoadDao3Db(): Promise<Dao3MapEntry[]> {
-  return loadGzJson("/data/dao3-details.json.gz", { db: _dao3Db, promise: _dao3Loading }, (v) => { _dao3Db = v; });
-}
-
-export async function clientLoadBox3SearchDb(): Promise<Box3SearchEntry[]> {
-  return loadGzJson("/data/box3-search.json.gz", { db: _box3SearchDb, promise: _box3SearchLoading }, (v) => { _box3SearchDb = v; });
-}
-
 export async function clientSearch(params: { q: string; sources: string[]; contentType?: number; tab?: string }): Promise<UnifiedSearchResult[]> {
-  const q = params.q.toLowerCase();
-  const ctNum = params.contentType ?? null;
-  const results: UnifiedSearchResult[] = [];
-
-  if (params.sources.includes("box3") && (!ctNum || ctNum === 1)) {
-    if (!_box3Db) await clientLoadBox3Db().catch(() => {});
-    if (_box3Db) {
-      for (const e of _box3Db) {
-        if (q && !e.n?.toLowerCase().includes(q) && !e.a?.toLowerCase().includes(q) && !e.h?.toLowerCase().includes(q) && String(e.ai) !== q) continue;
-        results.push({ source: "box3", box3Entry: e, relevance: 0 });
-      }
-    }
+  const { signedFetch, API_BASE } = await import("./api");
+  try {
+    const sp = new URLSearchParams();
+    sp.set("q", params.q);
+    sp.set("sources", params.sources.join(","));
+    if (params.contentType) sp.set("contentType", String(params.contentType));
+    if (params.tab) sp.set("tab", params.tab);
+    const resp = await signedFetch(API_BASE + "/search?" + sp.toString());
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    if (data.code !== 200 && !data.results) return [];
+    return (data.results || []).map((r: any) => {
+      if (r.source === "box3") return { source: "box3", box3Entry: r.data, relevance: 0 };
+      if (r.source === "dao3") return { source: "dao3", dao3Entry: r.data, relevance: 0 };
+      if (r.source === "box3-search") return { source: "box3-search", box3SearchEntry: r.data, relevance: 0 };
+      return { source: r.source, relevance: 0 };
+    });
+  } catch {
+    return [];
   }
-
-  if (params.sources.includes("dao3") && (!ctNum || ctNum === 1)) {
-    if (!_dao3Db) await clientLoadDao3Db().catch(() => {});
-    if (_dao3Db) {
-      for (const e of _dao3Db) {
-        if (params.tab && e.tab?.tabKey !== params.tab) continue;
-        if (q && !e.name?.toLowerCase().includes(q) && !e.author?.nickname?.toLowerCase().includes(q) && String(e.contentId) !== q && !(e.coAuthors?.some((c) => c.nickname?.toLowerCase().includes(q)))) continue;
-        results.push({ source: "dao3", dao3Entry: e, relevance: 0 });
-      }
-    }
-  }
-
-  if (params.sources.includes("box3-search")) {
-    if (!_box3SearchDb) await clientLoadBox3SearchDb().catch(() => {});
-    if (_box3SearchDb) {
-      for (const e of _box3SearchDb) {
-        if (ctNum && e.contentType !== ctNum) continue;
-        if (q && !e.name?.toLowerCase().includes(q) && !e.author?.displayname?.toLowerCase().includes(q) && String(e.contentId) !== q) continue;
-        results.push({ source: "box3-search", box3SearchEntry: e, relevance: 0 });
-      }
-    }
-  }
-
-  return results;
 }
+
 

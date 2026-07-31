@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { blockImageUrl, loadImageMap, API_BASE, signedFetch, type Box3RecommendItem } from "../../lib/api";
-import { ungzip } from "pako";
+
 
 import PageLayout from "../../components/PageLayout";
 import { encodePayload } from "../../lib/utils";
@@ -62,18 +62,8 @@ export default function Box3Page() {
       .then((data) => {
         if (!cancelled) { setItems(data.items || []); setLoading(false); }
       })
-      .catch(async () => {
-        try {
-          if (!_recDb) {
-            const resp = await fetch("/data/box3-recommend.json.gz");
-            const compressed = new Uint8Array(await resp.arrayBuffer());
-            const decompressed = ungzip(compressed);
-            _recDb = JSON.parse(new TextDecoder("utf-8").decode(decompressed));
-          }
-          if (!cancelled) { setItems(_recDb![String(activeTab)] || []); setLoading(false); }
-        } catch {
-          if (!cancelled) { setItems([]); setLoading(false); }
-        }
+      .catch(() => {
+        if (!cancelled) { setItems([]); setLoading(false); }
       });
     return () => { cancelled = true; };
   }, [activeTab]);
