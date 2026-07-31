@@ -3,7 +3,7 @@ import { handleOptions, verifySignature, jsonResp, ARC_MASTER_KEY } from "@/lib/
 import { query } from "@/lib/db-conn";
 import idHashMap from "@/data/dao3-id-hash";
 import mapAuthorMap from "@/data/dao3-map-author";
-import fallbackAuthors from "@/data/allowed-authors.json";
+
 
 let allowedSet: Set<string> | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -12,9 +12,7 @@ async function refreshAllowedSet() {
   try {
     const rows = await query("SELECT userId FROM allowed_authors");
     allowedSet = new Set((rows as any[]).map(r => String(r.userId)));
-  } catch {
-    if (!allowedSet) allowedSet = new Set(Object.keys(fallbackAuthors.authors));
-  }
+  } catch {}
 }
 
 function ensureTimer() {

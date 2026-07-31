@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { handleOptions, verifySignature, jsonResp, ARC_ADMIN_KEY } from "@/lib/api-utils";
 import { query } from "@/lib/db-conn";
-import fallbackAuthors from "@/data/allowed-authors.json";
 
 interface CacheData { authors: any[]; participants: Record<string, any>; allowedSet: Set<string>; }
 
@@ -19,14 +18,7 @@ async function refreshCache() {
     for (const r of aRows as any[]) allowedSet.add(r.userId);
     for (const r of pRows as any[]) participants[r.userId] = { nickname: r.nickname, joinedAt: r.joinedAt };
     cache = { authors: aRows as any[], participants, allowedSet };
-  } catch {
-    if (!cache) {
-      const authors = Object.entries(fallbackAuthors.authors).map(([userId, info]: [string, any]) => ({
-        userId, nickname: info.nickname, joinedAt: info.joinedAt,
-      }));
-      cache = { authors, participants: {}, allowedSet: new Set(Object.keys(fallbackAuthors.authors)) };
-    }
-  }
+  } catch {}
 }
 
 function ensureTimer() {
