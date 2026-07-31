@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import type { Dao3MapEntry } from "../lib/db";
+import { blockImageUrl } from "../lib/api";
 
 interface Dao3CardProps {
   entry: Dao3MapEntry;
@@ -31,7 +32,7 @@ export const Dao3Card = memo(function Dao3Card({ entry, onSelect }: Dao3CardProp
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
             {entry.author?.avatar && (
-              <img src={entry.author.avatar} alt="" style={{ width: 16, height: 16, borderRadius: "50%", objectFit: "cover" }} loading="lazy" />
+              <img src={blockImageUrl(entry.author.avatar)} alt="" style={{ width: 16, height: 16, borderRadius: "50%", objectFit: "cover" }} loading="lazy" />
             )}
             <span style={{ fontSize: 12, color: "var(--color-accent)", fontWeight: 500 }}>{entry.author?.nickname}</span>
             <span style={{ width: 1, height: 12, background: "var(--color-border)" }} />

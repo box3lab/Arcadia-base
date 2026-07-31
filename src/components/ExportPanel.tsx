@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
+import { blockImageUrl } from "../lib/api";
 import { type CurrentMap, fetchUserProfile, fetchUserDetail, type UserProfile, type UserDetail, fetchBlock, fetchBlockBinary, fetchBlockByHash, fetchBlockBinaryByHash, fetchPreviewBinary, isQmHash, cleanHash } from "../lib/api";
 import { exportMap, type ExportOptions } from "../lib/export";
 
@@ -203,8 +204,8 @@ export default function ExportPanel({ map, onBack }: ExportPanelProps) {
 
   const toggle = useCallback((key: keyof ExportOptions) => setOptions((p) => ({ ...p, [key]: !p[key] })), []);
   const pct = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
-  const avatarUrl = userDetail?.avatar || userDetail?.previewUrl;
-  const frameUrl = userDetail?.avatarFrame;
+  const avatarUrl = blockImageUrl(userDetail?.avatar || userDetail?.previewUrl || "");
+  const frameUrl = blockImageUrl(userDetail?.avatarFrame || "");
 
   const optionItems = useMemo(() =>
     OPTION_GROUPS.map(g => g.items.map(({ key, label, desc }) => ({ key, label, desc }))).flat(),

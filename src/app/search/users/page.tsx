@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import PageLayout from "../../../components/PageLayout";
 import LoadingCube from "../../../components/LoadingCube";
-import { API_BASE, signedFetch } from "../../../lib/api";
+import { API_BASE, signedFetch, blockImageUrl } from "../../../lib/api";
 
 interface UserResult {
   id: number;
@@ -61,7 +61,7 @@ function UserDetailModal({ user, onClose }: { user: UserResult; onClose: () => v
 
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
           {user.a ? (
-            <img src={user.a} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", background: "var(--color-border-light)" }} />
+            <img src={blockImageUrl(user.a)} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", background: "var(--color-border-light)" }} />
           ) : (
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--color-accent-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ fontSize: 20, fontWeight: 700, color: "var(--color-accent)" }}>{(user.n || "?").charAt(0)}</span>
@@ -250,7 +250,7 @@ export default function UserSearchPage() {
                     onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--color-border-light)"; e.currentTarget.style.boxShadow = "none"; }}
                   >
                     {user.a ? (
-                      <img src={user.a} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "var(--color-border-light)" }} />
+                      <img src={blockImageUrl(user.a)} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "var(--color-border-light)" }} />
                     ) : (
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--color-accent-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <span style={{ fontSize: 14, fontWeight: 700, color: "var(--color-accent)" }}>{(user.n || "?").charAt(0)}</span>

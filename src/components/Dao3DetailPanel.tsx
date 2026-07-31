@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Dao3MapEntry } from "../lib/db";
+import { blockImageUrl } from "../lib/api";
 
 interface Dao3DetailPanelProps {
   entry: Dao3MapEntry;
@@ -72,14 +73,14 @@ export default function Dao3DetailPanel({ entry, onBack }: Dao3DetailPanelProps)
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <div style={{ position: "relative", width: 52, height: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {entry.author?.avatar ? (
-              <img src={entry.author.avatar} alt="" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
+              <img src={blockImageUrl(entry.author.avatar)} alt="" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
             ) : (
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--color-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 15, fontWeight: 600 }}>
                 {(entry.author?.nickname || "?").charAt(0).toUpperCase()}
               </div>
             )}
             {entry.author?.avatarFrame && (
-              <img src={entry.author.avatarFrame} alt="" style={{ position: "absolute", top: 0, left: 0, width: 52, height: 52, pointerEvents: "none" }} />
+              <img src={blockImageUrl(entry.author.avatarFrame)} alt="" style={{ position: "absolute", top: 0, left: 0, width: 52, height: 52, pointerEvents: "none" }} />
             )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -97,7 +98,7 @@ export default function Dao3DetailPanel({ entry, onBack }: Dao3DetailPanelProps)
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {coAuthors.map((c) => (
                 <div key={c.userId} style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 6px", background: "var(--color-base)", borderRadius: "var(--radius-sm)" }}>
-                  {c.avatar && <img src={c.avatar} alt="" style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} loading="lazy" />}
+                  {c.avatar && <img src={blockImageUrl(c.avatar)} alt="" style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} loading="lazy" />}
                   <span style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{c.nickname}</span>
                 </div>
               ))}
