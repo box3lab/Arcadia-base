@@ -14,19 +14,21 @@ interface UserResult {
 }
 
 function UserDetailModal({ user, onClose }: { user: UserResult; onClose: () => void }) {
-  const [detail, setDetail] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [maps, setMaps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-      signedFetch(API_BASE + `/user-search?q=${user.id}&type=id&limit=1`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.code === 200 && d.data?.results?.[0]) {
-          setDetail(d.data.results[0]);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      signedFetch(API_BASE + `/dao3-user-profile?userId=${user.id}`)
+        .then(r => r.json()).then(d => d.code === 200 ? d.data : null).catch(() => null),
+      signedFetch(API_BASE + `/dao3-user-experience?userId=${user.id}&limit=50`)
+        .then(r => r.json()).then(d => d.data?.rows || []).catch(() => []),
+    ]).then(([p, m]) => {
+      setProfile(p);
+      setMaps(m);
+      setLoading(false);
+    });
   }, [user.id]);
 
   const genderLabel = (g: string | null) => {
@@ -60,43 +62,59 @@ function UserDetailModal({ user, onClose }: { user: UserResult; onClose: () => v
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-          {user.a ? (
-            <img src={blockImageUrl(user.a)} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", background: "var(--color-border-light)" }} />
+          {(profile?.avatar || user.a) ? (
+            <div style={{ position: "relative", width: 52, height: 52, flexShrink: 0 }}>
+              <img src={blockImageUrl(profile?.avatar || user.a)} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", background: "var(--color-border-light)", position: "absolute", top: 2, left: 2 }} />
+              {profile?.avatarFrame && <img src={blockImageUrl(profile.avatarFrame)} alt="" style={{ position: "absolute", top: 0, left: 0, width: 52, height: 52, pointerEvents: "none" }} />}
+            </div>
           ) : (
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--color-accent-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "var(--color-accent)" }}>{(user.n || "?").charAt(0)}</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: "var(--color-accent)" }}>{(profile?.nickname || user.n || "?").charAt(0)}</span>
             </div>
           )}
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--color-text)" }}>{user.n || "未命名"}</div>
-            <div style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginTop: 2 }}>ID: {user.id}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--color-text)" }}>{profile?.nickname || user.n || "未命名"}</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginTop: 2 }}>ID: {profile?.userId || user.id}</div>
+            {profile?.followerNum != null && (
+              <div style={{ fontSize: 10, color: "var(--color-text-tertiary)", marginTop: 1 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 2, verticalAlign: -1 }}>
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                {profile.followerNum} 粉丝
+              </div>
+            )}
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--color-border-light)" }}>
-          {[
-            ["性别", genderLabel(user.g)],
-            ["简介", user.intro || "无"],
-            ...(detail ? Object.entries(detail).filter(([k]) => !["id", "n", "a", "g", "intro"].includes(k)).map(([k, v]) => [
-              k, typeof v === "object" ? JSON.stringify(v) : String(v ?? "无")
-            ]) : []),
-          ].map(([label, value], i) => (
-            <div key={String(label)} style={{
-              display: "flex", alignItems: "flex-start",
-              padding: "7px 12px",
-              background: i % 2 === 0 ? "var(--color-base)" : "transparent",
-              fontSize: 12,
-            }}>
-              <span style={{ width: 56, flexShrink: 0, color: "var(--color-text-tertiary)", fontWeight: 500 }}>{String(label)}</span>
-              <span style={{ color: "var(--color-text)", wordBreak: "break-all" }}>{String(value)}</span>
+        {profile?.introduction && (
+          <div style={{ padding: "8px 12px", borderRadius: "var(--radius-md)", background: "var(--color-base)", marginBottom: 10, fontSize: 12, color: "var(--color-text-secondary)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+            {profile.introduction}
+          </div>
+        )}
+
+        {maps.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+              地图 ({maps.length})
             </div>
-          ))}
-          {loading && (
-            <div style={{ padding: 12, textAlign: "center" }}>
-              <LoadingCube size={14} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, maxHeight: 200, overflowY: "auto" }}>
+              {maps.slice(0, 20).map((m: any) => (
+                <div key={m.contentId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", borderRadius: "var(--radius-sm)", background: "var(--color-base)", fontSize: 11 }}>
+                  {m.preview && <img src={m.preview} alt="" style={{ width: 24, height: 14, borderRadius: 2, objectFit: "cover", flexShrink: 0 }} />}
+                  <span style={{ flex: 1, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</span>
+                  <span style={{ color: "var(--color-text-tertiary)", fontSize: 9, flexShrink: 0 }}>{(m.playCount || 0).toLocaleString()} 播放</span>
+                </div>
+              ))}
+              {maps.length > 20 && <div style={{ fontSize: 10, color: "var(--color-text-tertiary)", padding: "4px 8px" }}>...还有 {maps.length - 20} 个</div>}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {loading && (
+          <div style={{ padding: 12, textAlign: "center" }}>
+            <LoadingCube size={14} />
+          </div>
+        )}
 
         <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
           <a href={`https://dao3.fun/profile/${user.id}`} target="_blank" rel="noopener noreferrer" style={{
