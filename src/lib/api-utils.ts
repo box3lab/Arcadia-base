@@ -34,7 +34,7 @@ export async function verifySignature(req: NextRequest) {
   if (nonce.length < 8 || nonce.length > 64) return jsonResp({ error: "invalid_nonce" }, 403);
   const url = new URL(req.url);
   const basePath = process.env.NEXT_BASE_PATH || "";
-  const path = url.pathname.replace(new RegExp(`^${basePath.replace(/\//g, "\\/")}`), "") + url.search;
+  const path = url.pathname.replace(new RegExp(`^${basePath.replace(/\//g, "\\/")}`), "").replace(/^\/api/, "") + url.search;
   const expected = await sha256(nonce + ts + ARC_SECRET + path);
   if (sig !== expected) return jsonResp({ error: "invalid_signature" }, 403);
   return null;
