@@ -1,14 +1,23 @@
-version: "3.8"
-
 services:
   arcadia-base:
-    build: .
+    image: arcadia-base:latest
     container_name: arcadia-base
     restart: unless-stopped
     ports:
-      - "3000:3000"
-    env_file:
-      - .env.local
+      - "3231:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: ${DB_HOST:?DB_HOST is required}
+      DB_PORT: ${DB_PORT:-2000}
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      DB_USER: ${DB_USER:?DB_USER is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      ARC_SECRET: ${ARC_SECRET:?ARC_SECRET is required}
+      ARC_MASTER_KEY: ${ARC_MASTER_KEY:?ARC_MASTER_KEY is required}
+      ARC_ADMIN_KEY: ${ARC_ADMIN_KEY:?ARC_ADMIN_KEY is required}
+      DAO3_TOKEN: ${DAO3_TOKEN:-}
+      DAO3_HASH_KEY: ${DAO3_HASH_KEY:?DAO3_HASH_KEY is required}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
       interval: 30s
