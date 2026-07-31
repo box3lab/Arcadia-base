@@ -6,24 +6,27 @@ import mapAuthorMap from "@/data/dao3-map-author";
 import fallbackAuthors from "@/data/allowed-authors.json";
 
 let allowedSet: Set<string> | null = null;
-let allowedAt = 0;
-const CACHE_TTL = 60_000;
+let timer: ReturnType<typeof setInterval> | null = null;
 
-async function loadAllowedSet(): Promise<Set<string>> {
-  if (allowedSet && Date.now() - allowedAt < CACHE_TTL) return allowedSet;
+async function refreshAllowedSet() {
   try {
     const rows = await query("SELECT userId FROM allowed_authors");
     allowedSet = new Set((rows as any[]).map(r => String(r.userId)));
   } catch {
-    allowedSet = new Set(Object.keys(fallbackAuthors.authors));
+    if (!allowedSet) allowedSet = new Set(Object.keys(fallbackAuthors.authors));
   }
-  allowedAt = Date.now();
-  return allowedSet!;
+}
+
+function ensureTimer() {
+  if (timer) return;
+  refreshAllowedSet();
+  timer = setInterval(refreshAllowedSet, 60_000);
 }
 
 export async function OPTIONS() { return handleOptions(); }
 
 export async function GET(req: NextRequest) {
+  ensureTimer();
   const sigErr = await verifySignature(req);
   if (sigErr) return sigErr;
 
@@ -37,15 +40,12 @@ export async function GET(req: NextRequest) {
   const mk = req.headers.get("X-Master-Key");
   if (mk !== ARC_MASTER_KEY) {
     const authorId = (mapAuthorMap as any)[mapId];
-    if (authorId) {
-      const set = await loadAllowedSet();
-      if (!set.has(String(authorId))) {
-        return jsonResp({
-          code: 403, error: "author_not_allowed",
-          message: "该地图作者未参与开源计划，暂不可导出",
-          mapId: Number(mapId), authorId,
-        }, 403);
-      }
+    if (authorId && allowedSet && !allowedSet.has(String(authorId))) {
+      return jsonResp({
+        code: 403, error: "author_not_allowed",
+        message: "该地图作者未参与开源计划，暂不可导出",
+        mapId: Number(mapId), authorId,
+      }, 403);
     }
   }
 
