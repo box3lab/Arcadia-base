@@ -22,17 +22,21 @@ export default function OpenSourcePage() {
   const [autoLoginTried, setAutoLoginTried] = useState(false);
 
   useEffect(() => {
-
-    try {
-      const localToken = localStorage.getItem("AUTHORIZATION");
-      if (localToken) {
-        setToken(localToken);
-        setLoggedIn(true);
-        setActiveTab("login");
-      }
-    } catch {}
+    const checkToken = () => {
+      try {
+        const localToken = localStorage.getItem("AUTHORIZATION");
+        if (localToken && !loggedIn) {
+          setToken(localToken);
+          setLoggedIn(true);
+          setActiveTab("login");
+        }
+      } catch {}
+    };
+    checkToken();
     setAutoLoginTried(true);
-  }, []);
+    const interval = setInterval(checkToken, 1000);
+    return () => clearInterval(interval);
+  }, [loggedIn]);
 
   useEffect(() => {
     signedFetch(API_BASE + "/opensource?action=list")
