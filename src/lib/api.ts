@@ -7,7 +7,7 @@ const EXT_RE = /\.(png|jpg|jpeg|gif|webp|svg|mp3|ogg|wav|bin|vb|vox|json|js|part
 
 export function cleanHash(h: string): string {
   if (!h || typeof h !== "string") return h;
-  return h.replace(EXT_RE, "");
+  return h.replace(EXT_RE, "").replace(/\.$/, "");
 }
 
 export function isQmHash(h: string): boolean {
