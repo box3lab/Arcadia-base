@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
     } else {
       results = await searchByName(q, limit);
     }
-    return jsonResp({ code: 200, msg: "success", data: { query, type: isIdSearch ? "id" : "name", count: results.length, results } });
+    return jsonResp({ code: 200, msg: "success", data: { query: q, type: isIdSearch ? "id" : "name", count: results.length, results } });
   } catch (e: any) {
     return jsonResp({ code: 500, msg: e.message }, 500);
   }
