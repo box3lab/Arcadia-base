@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { handleOptions, verifySignature, jsonResp } from "@/lib/api-utils";
 import { ungzip } from "pako";
+import { readFile } from "fs/promises";
+import { join } from "path";
+
+const PUBLIC_DIR = join(process.cwd(), "public");
 
 let box3Db: any[] | null = null;
 let dao3Db: any[] | null = null;
@@ -8,11 +12,8 @@ let box3SearchDb: any[] | null = null;
 let loadingPromise: Promise<void> | null = null;
 
 async function loadGzJson(path: string): Promise<any> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
-  const resp = await fetch(baseUrl + path);
-  if (!resp.ok) throw new Error(`Failed to fetch ${path}: ${resp.status}`);
-  const compressed = new Uint8Array(await resp.arrayBuffer());
-  const decompressed = ungzip(compressed);
+  const compressed = await readFile(join(PUBLIC_DIR, path));
+  const decompressed = ungzip(new Uint8Array(compressed.buffer, compressed.byteOffset, compressed.byteLength));
   return JSON.parse(new TextDecoder("utf-8").decode(decompressed));
 }
 

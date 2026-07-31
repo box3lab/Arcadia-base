@@ -7,6 +7,5 @@ out
 .env
 .env.local
 .env*.local
-scripts/
 docs/
 arcadia-base-backup-*

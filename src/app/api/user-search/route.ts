@@ -1,5 +1,9 @@
 import { NextRequest } from "next/server";
 import { handleOptions, verifySignature, jsonResp } from "@/lib/api-utils";
+import { readFile } from "fs/promises";
+import { join } from "path";
+
+const PUBLIC_DIR = join(process.cwd(), "public");
 
 interface IdMapEntry { file: number; minId: number; maxId: number; count: number; }
 interface UserEntry { id: number; n: string; a: string; g: string | null; intro: string; }
@@ -9,10 +13,8 @@ let idMap: IdMapEntry[] | null = null;
 let nameCatalog: Record<string, { char: string; count: number }> | null = null;
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
-  const resp = await fetch(baseUrl + path);
-  if (!resp.ok) throw new Error(`Failed to fetch ${path}: ${resp.status}`);
-  return resp.json() as Promise<T>;
+  const buf = await readFile(join(PUBLIC_DIR, path));
+  return JSON.parse(new TextDecoder("utf-8").decode(buf)) as T;
 }
 
 async function ensureIdMap() {

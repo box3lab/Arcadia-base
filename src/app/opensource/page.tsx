@@ -22,15 +22,7 @@ export default function OpenSourcePage() {
   const [autoLoginTried, setAutoLoginTried] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("token");
-    if (t) {
-      setToken(t);
-      setLoggedIn(true);
-      setActiveTab("login");
-      window.history.replaceState({}, "", "/opensource");
-      return;
-    }
+
     try {
       const localToken = localStorage.getItem("AUTHORIZATION");
       if (localToken) {
@@ -59,7 +51,7 @@ export default function OpenSourcePage() {
     } catch {}
     if (!userId) { setUserInfo({ nickname: "令牌无效", id: "" }); return; }
     try {
-      const resp = await signedFetch(API_BASE + "/dao3-user-experience?userId=${userId}&type=id", {
+      const resp = await signedFetch(API_BASE + `/dao3-user-experience?userId=${userId}&type=id`, {
         headers: { Authorization: token },
       });
       const data = await resp.json();
@@ -204,13 +196,13 @@ export default function OpenSourcePage() {
                     请先在 dao3.fun 登录，然后刷新本页面。系统将自动识别您的登录状态。
                   </p>
                   <button
-                    onClick={() => { try { const t = localStorage.getItem("AUTHORIZATION"); if (t) { setToken(t); setLoggedIn(true); } } catch {} }}
+                    onClick={() => { window.location.href = "/auth/login?redirect=/opensource"; }}
                     style={{
                       padding: "8px 20px", fontSize: 12, fontWeight: 500,
                       borderRadius: "var(--radius-md)", border: "none", cursor: "pointer",
                       background: "var(--color-accent)", color: "white",
                     }}
-                  >重新检测</button>
+                  >前往神岛授权</button>
                 </div>
               ) : (
                 <div className="animate-fade-in">
@@ -272,7 +264,7 @@ export default function OpenSourcePage() {
                   </div>
 
                   <button
-                    onClick={() => { setLoggedIn(false); setToken(""); setUserInfo(null); setOptedIn(false); }}
+                    onClick={() => { setLoggedIn(false); setToken(""); setUserInfo(null); setOptedIn(false); try { localStorage.removeItem("AUTHORIZATION"); } catch {} }}
                     style={{
                       width: "100%", padding: "7px 0", fontSize: 11,
                       borderRadius: "var(--radius-md)", border: "1px solid var(--color-border-light)",

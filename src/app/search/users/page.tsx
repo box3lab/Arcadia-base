@@ -18,7 +18,7 @@ function UserDetailModal({ user, onClose }: { user: UserResult; onClose: () => v
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-      signedFetch(API_BASE + "/user-search?q=${user.id}&type=id&limit=1")
+      signedFetch(API_BASE + `/user-search?q=${user.id}&type=id&limit=1`)
       .then(r => r.json())
       .then(d => {
         if (d.code === 200 && d.data?.results?.[0]) {

@@ -142,7 +142,8 @@ function randomNonce(): string {
 
 async function signedFetch(url: string, init?: RequestInit): Promise<Response> {
   const u = new URL(url, window.location.origin);
-  const path = u.pathname.replace(/^\/api/, "") + u.search;
+  const basePath = window.__NEXT_DATA__?.basePath || "";
+  const path = u.pathname.replace(new RegExp(`^${basePath}/api`), "").replace(/^\/api/, "") + u.search;
   const nonce = randomNonce();
   const ts = String(Date.now());
   const sig = await sha256(nonce + ts + _sd() + path);
@@ -163,7 +164,8 @@ async function dao3SignedFetch(path: string, token: string, ua: string, init?: R
   const base = apiBase();
   const url = base + path;
   const u = new URL(url, window.location.origin);
-  const signedPath = u.pathname.replace(/^\/api/, "") + u.search;
+  const basePath = window.__NEXT_DATA__?.basePath || "";
+  const signedPath = u.pathname.replace(new RegExp(`^${basePath}/api`), "").replace(/^\/api/, "") + u.search;
   const nonce = randomNonce();
   const ts = String(Date.now());
   const sig = await sha256(nonce + ts + _sd() + signedPath);
